@@ -1,85 +1,77 @@
 // Pin Definitions
-const int PWMA = 5;  // Motor A speed (PWM)
-const int PWMB = 6;  // Motor B speed (PWM)
 const int AIN = 7;  // Motor A direction
+const int PWMA = 5;  // Motor A speed (PWM)
 const int BIN = 8;  // Motor B direction
-const int STBY = 3;  // Standby pin to stop the whole car
+const int PWMB = 6;  // Motor B speed (PWM)
+const int STBY = 3;  // Standby pin 
 
-int carState = 1;   // Start with the car on (motors enabled)
-int carSpeed = 100;  // Initial speed of the car (range: 0 to 255)
+int Speed = 100;  // Initial speed of the car (range: 0 to 255)
 
 // Function Movement
-void forward();
-void stopMotors();
-void spinRight();
-void spinLeft();
+void Forward();
+void Stop();
+void Left();
 
 
 void setup() {
-  Serial.begin(9600);
-
-  pinMode(pinA, OUTPUT);
-  pinMode(pinB, OUTPUT);
-  pinMode(pinC, OUTPUT);
-  pinMode(pinD, OUTPUT);
-  pinMode(pinE, OUTPUT);
+// Initialize all pins as OUTPUT
+  pinMode(AIN, OUTPUT);
+  pinMode(PWMA, OUTPUT);
+  pinMode(BIN, OUTPUT);
+  pinMode(PWMB, OUTPUT);
+  pinMode(STBY, OUTPUT);
 }
 
 void loop() {
-  forward();
-  delay(7000);
-  spinLeft();
+  Forward();
+  delay(8000);
+  Left();
+  delay(2000); 
+
+  Forward();
+  delay(4000);
+  Left();
+  delay(2000); 
 
   forward();
-  delay(3000);
-  spinLeft();
+  delay(8000);
+  Left();
+  delay(2000); 
 
-  forward();
-  delay(6000);
-  spinLeft();
+  Forward();
+  delay(4000);
+  Left();
+  delay(2000); 
 
-  forward();
-  delay(3000);
-  spinLeft();
-  forward();
+  Forward();
   delay(2000);
-  stopMotors();
+  Stop();
   delay(10000);
 }
 
 // Move forward
 void forward() {
-  digitalWrite(pinC, HIGH);      // Motor A direction (forward)
-  analogWrite(pinA, carSpeed);   // Motor A speed (set speed)
-  digitalWrite(pinD, HIGH);      // Motor B direction (forward)
-  analogWrite(pinB, carSpeed);   // Motor B speed (set speed)
-  digitalWrite(pinE, carState);  // Enable car (turn on motors if carState is 1)
+  digitalWrite(AIN, HIGH);     // Motor A direction (forward)
+  analogWrite(PWMA, Speed);    // Motor A speed (set speed)
+  digitalWrite(BIN, HIGH);     // Motor B direction (forward)
+  analogWrite(PWMB, Speed);    // Motor B speed (set speed)
+  digitalWrite(STBY, HIGH);    // Enable car (turn on motors)
 }
 
 // Stop motors
-void stopMotors() {
-  digitalWrite(pinC, LOW);  // Motor A direction (stop)
-  analogWrite(pinA, 0);     // Motor A speed (stop)
-  digitalWrite(pinD, LOW);  // Motor B direction (stop)
-  analogWrite(pinB, 0);     // Motor B speed (stop)
+void Stop() {
+  digitalWrite(AIN, LOW);      // Motor A direction (stop)
+  analogWrite(PWMA, 0);        // Motor A speed (stop)
+  digitalWrite(BIN, LOW);      // Motor B direction (stop)
+  analogWrite(PWMB, 0);        // Motor B speed (stop)
+  digitalWrite(STBY, LOW);     // Disable car (turn off motors)
 }
 
-// Spin the car to the right
-void spinRight() {
-  digitalWrite(pinC, HIGH);            // Motor A direction (backward)
-  analogWrite(pinA, carSpeed/2);        // Motor A speed (set speed)
-  digitalWrite(pinD, HIGH);           // Motor B direction (forward)
-  analogWrite(pinB, carSpeed);  // Motor B speed (set speed)
-  delay(2000);                         // Adjust delay for turning duration
- 
-}
-
-// Spin the car to the left
-void spinLeft() {
-  digitalWrite(pinC, HIGH);           // Motor A direction (forward)
-  analogWrite(pinA, carSpeed);  // Motor A speed (set speed)
-  digitalWrite(pinD, HIGH);            // Motor B direction (backward)
-  analogWrite(pinB, carSpeed/2);        // Motor B speed (set speed)
-  delay(2200);                         // Adjust delay for turning duration
-
+// Turn left
+void Left() {
+  digitalWrite(AIN, HIGH);     // Motor A direction (forward)
+  analogWrite(PWMA, Speed);    // Motor A speed (set speed)
+  digitalWrite(BIN, LOW);      // Motor B direction (backward)
+  analogWrite(PWMB, Speed / 2); // Motor B speed (set speed)
+  digitalWrite(STBY, HIGH);    // Enable car (turn on motors)
 }
