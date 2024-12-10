@@ -1,0 +1,132 @@
+/*
+   Make the robot car follow the line.
+  
+   Using analog sensor inputs to detect the position of the robot relative to a line, and based on these readings, the robot's motors are controlled to move forward, turn, or stop.
+*/
+
+const int AIN = 7;      // Motor A direction pin
+const int PWMA = 5;     // Motor A speed (PWM) pin
+const int BIN_PIN = 8;  // Motor B direction pin
+const int PWMB = 6;     // Motor B speed (PWM) pin
+const int STBY = 3;     // Standby pin for enabling/disabling motors
+
+int RsensorPin = A0;   // Right sensor analog input pin
+int MsensorPin = A1;   // Middle sensor analog input pin
+int LsensorPin = A2;   // Left sensor analog input pin
+
+const int IR_RECEIVE_PIN = 9;  // IR receiver pin (not used in this code)
+
+int Speed = 75; // Initial speed of the car (range: 0 to 255)
+
+unsigned long pTime = 0;           // Variable to store the previous time for time-based control
+unsigned long pDetectionTime = 0;  // Variable to store the previous detection time for time-based actions
+
+void setup() {  
+  Serial.begin(9600);  // Initialize serial communication for debugging purposes
+
+  // Initialize motor control pins as outputs
+  pinMode(AIN, OUTPUT);  
+  pinMode(PWMA, OUTPUT);  
+  pinMode(BIN_PIN, OUTPUT);  
+  pinMode(PWMB, OUTPUT);  
+  pinMode(STBY, OUTPUT);  
+}
+
+void loop() {
+  // Read the sensor values from the right, middle, and left sensors
+  int R_reading = analogRead(RsensorPin);  // Right sensor reading
+  int M_reading = analogRead(MsensorPin);  // Middle sensor reading
+  int L_reading = analogRead(LsensorPin);  // Left sensor reading
+
+  // Print the sensor readings to the Serial Monitor for debugging purposes
+  Serial.print("SensorR: ");
+  Serial.print(R_reading);
+  Serial.print("\t");
+
+  Serial.print("SensorM: ");
+  Serial.print(M_reading);
+  Serial.print("\t");
+
+  Serial.print("SensorL: ");
+  Serial.println(L_reading); 
+  
+  // Decision-making based on sensor readings
+
+  // If right sensor detects the line, move forward
+  if (R_reading > 500 && R_reading < 850) {
+    forward();  // Move forward
+  }
+  // If middle sensor detects the line, move forward
+  else if (M_reading > 500 && M_reading < 850) {
+    forward();  // Move forward
+  }
+  // If left and middle sensors detect the line, move forward
+  else if (L_reading > 500 && L_reading < 850 && M_reading > 500 && M_reading < 850) {
+    forward();  // Move forward
+  }
+  // If no sensors detect the line, stop the robot
+  else if (R_reading > 850 && M_reading > 850 && L_reading > 850) {
+    stop();  // Stop the robot
+  }
+  // If the left sensor detects the line and middle sensor does not, turn left
+  else if (L_reading > 500 && L_reading < 850 && M_reading < 500) {
+    left();  // Turn left
+  }
+  // If the right sensor detects the line and middle sensor does not, turn right
+  else if (R_reading > 500 && R_reading < 850 && M_reading < 500) {
+    right();  // Turn right
+  }
+  // If none of the sensors detect the line, follow the time-based strategy
+  else if (R_reading < 500 && M_reading < 500 && L_reading < 500) {
+    unsigned long DetectionTime = millis();  // Get current time to manage time-based actions
+
+    // Time-based actions (timed intervals for different movements)
+    if (DetectionTime - pDetectionTime <= 500) {
+      right();  // Turn right for the first 500ms
+    } else if (DetectionTime - pDetectionTime >= 500 && DetectionTime - pDetectionTime <= 2500) {
+      left();  // Turn left between 500ms and 2500ms
+    } else if (DetectionTime - pDetectionTime >= 2500 && DetectionTime - pDetectionTime <= 5000) {
+      right();  // Turn right again between 2500ms and 5000ms
+    } else if (DetectionTime - pDetectionTime >= 5000 && DetectionTime - pDetectionTime <= 8000) {
+      stop();  // Stop between 5000ms and 8000ms
+    } else if (DetectionTime - pDetectionTime >= 8000) {
+      pDetectionTime = DetectionTime;  // Reset pDetectionTime to the current time after 8000ms
+    }
+  }
+}
+
+// Move the car forward
+void forward() {
+  digitalWrite(AIN, HIGH);     // Set Motor A direction to forward
+  analogWrite(PWMA, Speed);    // Set Motor A speed
+  digitalWrite(BIN_PIN, HIGH); // Set Motor B direction to forward
+  analogWrite(PWMB, Speed);    // Set Motor B speed
+  digitalWrite(STBY, HIGH);    // Enable motors
+}
+
+// Turn the car to the right
+void right() {
+  digitalWrite(AIN, LOW);      // Set Motor A direction to backward
+  analogWrite(PWMA, Speed);    // Set Motor A speed (same speed as normal)
+  digitalWrite(BIN_PIN, HIGH); // Set Motor B direction to forward
+  analogWrite(PWMB, Speed);    // Set Motor B speed
+  digitalWrite(STBY, HIGH);    // Enable motors
+}
+
+// Turn the car to the left
+void left() {
+  digitalWrite(AIN, HIGH);     // Set Motor A direction to forward
+  analogWrite(PWMA, Speed);    // Set Motor A speed (same speed as normal)
+  digitalWrite(BIN_PIN, LOW);  // Set Motor B direction to backward
+  analogWrite(PWMB, Speed);    // Set Motor B speed
+  digitalWrite(STBY, HIGH);    // Enable motors
+}
+
+// Stop the car and disable motors
+void stop() {
+  digitalWrite(AIN, LOW);      // Stop Motor A (set direction to low)
+  analogWrite(PWMA, 0);        // Set Motor A speed to 0 (stop)
+  digitalWrite(BIN_PIN, LOW);  // Stop Motor B (set direction to low)
+  analogWrite(PWMB, 0);        // Set Motor B speed to 0 (stop)
+  digitalWrite(STBY, LOW);     // Disable motors
+}
