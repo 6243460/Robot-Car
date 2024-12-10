@@ -14,7 +14,7 @@ void Left();
 
 
 void setup() {
-// Initialize all pins as OUTPUT
+  // Initialize all pins as OUTPUT
   pinMode(AIN, OUTPUT);
   pinMode(PWMA, OUTPUT);
   pinMode(BIN, OUTPUT);
@@ -23,34 +23,34 @@ void setup() {
 }
 
 void loop() {
-  Forward();
+  Forward();   
   delay(8000);
   Left();
   delay(2000); 
 
-  Forward();
+  Forward();   
   delay(4000);
   Left();
   delay(2000); 
 
-  forward();
+  Forward();   
   delay(8000);
   Left();
   delay(2000); 
 
-  Forward();
+  Forward();   
   delay(4000);
   Left();
   delay(2000); 
 
-  Forward();
+  Forward();   
   delay(2000);
   Stop();
   delay(10000);
 }
 
-// Move forward
-void forward() {
+
+void Forward() {  // Move forward
   digitalWrite(AIN, HIGH);     // Motor A direction (forward)
   analogWrite(PWMA, Speed);    // Motor A speed (set speed)
   digitalWrite(BIN, HIGH);     // Motor B direction (forward)
@@ -58,8 +58,7 @@ void forward() {
   digitalWrite(STBY, HIGH);    // Enable car (turn on motors)
 }
 
-// Stop motors
-void Stop() {
+void Stop() { // Stop motors
   digitalWrite(AIN, LOW);      // Motor A direction (stop)
   analogWrite(PWMA, 0);        // Motor A speed (stop)
   digitalWrite(BIN, LOW);      // Motor B direction (stop)
@@ -67,8 +66,8 @@ void Stop() {
   digitalWrite(STBY, LOW);     // Disable car (turn off motors)
 }
 
-// Turn left
-void Left() {
+
+void Left() { // Turn left
   digitalWrite(AIN, HIGH);     // Motor A direction (forward)
   analogWrite(PWMA, Speed);    // Motor A speed (set speed)
   digitalWrite(BIN, LOW);      // Motor B direction (backward)
