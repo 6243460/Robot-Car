@@ -1,7 +1,7 @@
 // Pin Definitions
 const int AIN = 7;  // Motor A direction
 const int PWMA = 5;  // Motor A speed (PWM)
-const int BIN = 8;  // Motor B direction
+const int BIN_PIN = 8;  // Motor B direction (renamed to avoid conflict)
 const int PWMB = 6;  // Motor B speed (PWM)
 const int STBY = 3;  // Standby pin 
 
@@ -17,7 +17,7 @@ void setup() {
   // Initialize all pins as OUTPUT
   pinMode(AIN, OUTPUT);
   pinMode(PWMA, OUTPUT);
-  pinMode(BIN, OUTPUT);
+  pinMode(BIN_PIN, OUTPUT);  // Updated to BIN_PIN
   pinMode(PWMB, OUTPUT);
   pinMode(STBY, OUTPUT);
 }
@@ -53,7 +53,7 @@ void loop() {
 void Forward() {  // Move forward
   digitalWrite(AIN, HIGH);     // Motor A direction (forward)
   analogWrite(PWMA, Speed);    // Motor A speed (set speed)
-  digitalWrite(BIN, HIGH);     // Motor B direction (forward)
+  digitalWrite(BIN_PIN, HIGH);     // Motor B direction (forward) (updated to BIN_PIN)
   analogWrite(PWMB, Speed);    // Motor B speed (set speed)
   digitalWrite(STBY, HIGH);    // Enable car (turn on motors)
 }
@@ -61,7 +61,7 @@ void Forward() {  // Move forward
 void Stop() { // Stop motors
   digitalWrite(AIN, LOW);      // Motor A direction (stop)
   analogWrite(PWMA, 0);        // Motor A speed (stop)
-  digitalWrite(BIN, LOW);      // Motor B direction (stop)
+  digitalWrite(BIN_PIN, LOW);      // Motor B direction (stop) (updated to BIN_PIN)
   analogWrite(PWMB, 0);        // Motor B speed (stop)
   digitalWrite(STBY, LOW);     // Disable car (turn off motors)
 }
@@ -70,7 +70,7 @@ void Stop() { // Stop motors
 void Left() { // Turn left
   digitalWrite(AIN, HIGH);     // Motor A direction (forward)
   analogWrite(PWMA, Speed);    // Motor A speed (set speed)
-  digitalWrite(BIN, LOW);      // Motor B direction (backward)
+  digitalWrite(BIN_PIN, LOW);      // Motor B direction (backward) (updated to BIN_PIN)
   analogWrite(PWMB, Speed / 2); // Motor B speed (set speed)
   digitalWrite(STBY, HIGH);    // Enable car (turn on motors)
 }
