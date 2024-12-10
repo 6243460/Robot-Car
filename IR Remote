@@ -1,0 +1,189 @@
+/*
+  This program controls the movement of the car using an IR remote. The car's
+  movement can be directed forward, backward, left, and right while also being able to
+  increase or decrease the car's speed using star and hashtag buttons on the IR remote.
+ 
+  Uses the IRremote library to receive IR signals and interpret the digital inputs (buttons)
+  Each button press on the remote corresponds to a specific car movement or speed adjustment.
+*/ 
+
+#include <IRremote.h>  // Include the IRremote library to handle IR signal decoding
+
+#define IR_RECEIVE_PIN 9  // Define the pin connected to the IR receiver
+
+// Define the IR button codes for each remote button (in hexadecimal format)
+#define Button_Up      0xB946FF00
+#define Button_Down    0xEA15FF00
+#define Button_Right   0xBC43FF00
+#define Button_Left    0xBB44FF00
+#define Button_OK      0xBF40FF00
+#define Button_Star    0xBD42FF00
+#define Button_Hashtag 0xB54AFF00 
+
+// Pin assignments for controlling the motor and speed
+const int AIN = 7;      // Motor A direction pin
+const int PWMA = 5;     // Motor A speed (PWM) pin
+const int BIN_PIN = 8;  // Motor B direction pin
+const int PWMB = 6;     // Motor B speed (PWM) pin
+const int STBY = 3;     // Standby pin for enabling/disabling motors
+
+int carSpeed = 35;      // Initial speed of the car (range: 0 to 255)
+int carState = 0;       // Tracks the current state of the car: 0 = stopped, 1 = forward, etc.
+const int speedStep = 10;  // Increment for adjusting speed
+
+// Function declarations
+void Forward();
+void Backward();
+void Right();
+void Left();
+void Stop();
+void applyCurrentState();
+void increaseSpeed();
+void decreaseSpeed();
+
+void setup() {
+  Serial.begin(9600);  // Initialize serial communication for debugging
+  IrReceiver.begin(IR_RECEIVE_PIN, ENABLE_LED_FEEDBACK);  // Start the IR receiver to capture signals
+  
+  // Initialize motor control pins as OUTPUT to control the motors
+  pinMode(AIN, OUTPUT);
+  pinMode(PWMA, OUTPUT);
+  pinMode(BIN_PIN, OUTPUT);
+  pinMode(PWMB, OUTPUT);
+  pinMode(STBY, OUTPUT);
+}
+
+void loop() {
+  // Check if an IR signal has been received
+  if (IrReceiver.decode()) {
+    // Print the received IR code to the serial monitor for debugging
+    Serial.print("Received HEX Value: ");
+    Serial.println(IrReceiver.decodedIRData.decodedRawData, HEX);
+    
+    // Based on the received IR button code, change the car state (movement or speed change)
+    switch (IrReceiver.decodedIRData.decodedRawData) {
+      case Button_Up:    
+        carState = 1;  // Move forward
+        break;        
+        
+      case Button_Down:  
+        carState = 2;  // Move backward
+        break;         
+        
+      case Button_OK:    
+        carState = 0;  // Stop the car
+        break;        
+        
+      case Button_Right: 
+        carState = 3;  // Turn right
+        break;        
+        
+      case Button_Left:  
+        carState = 4;  // Turn left
+        break;        
+        
+      case Button_Star:  
+        increaseSpeed();  // Increase car speed
+        break;        
+        
+      case Button_Hashtag:  
+        decreaseSpeed();  // Decrease car speed
+        break;         
+        
+      default: 
+        break;  // Do nothing for unrecognized buttons
+    }
+    
+    applyCurrentState();  // Apply the updated car state (movement or stop)
+    IrReceiver.resume();  // Prepare for the next IR signal
+  }
+}
+
+// Move the car forward
+void Forward() {
+  digitalWrite(AIN, HIGH);     // Set motor A to forward
+  analogWrite(PWMA, carSpeed); // Set motor A speed
+  digitalWrite(BIN_PIN, HIGH); // Set motor B to forward
+  analogWrite(PWMB, carSpeed); // Set motor B speed
+  digitalWrite(STBY, HIGH);    // Enable motors (set standby high)
+}
+
+// Move the car backward
+void Backward() {
+  digitalWrite(AIN, LOW);      // Set motor A to backward
+  analogWrite(PWMA, carSpeed); // Set motor A speed
+  digitalWrite(BIN_PIN, LOW);  // Set motor B to backward
+  analogWrite(PWMB, carSpeed); // Set motor B speed
+  digitalWrite(STBY, HIGH);    // Enable motors
+}
+
+// Turn the car to the right
+void Right() {
+  digitalWrite(AIN, LOW);      // Set motor A to backward (right turn)
+  analogWrite(PWMA, carSpeed / 2); // Reduce speed for turning
+  digitalWrite(BIN_PIN, HIGH); // Set motor B to forward
+  analogWrite(PWMB, carSpeed); // Set motor B speed
+  digitalWrite(STBY, HIGH);    // Enable motors
+}
+
+// Turn the car to the left
+void Left() {
+  digitalWrite(AIN, HIGH);     // Set motor A to forward (left turn)
+  analogWrite(PWMA, carSpeed); // Set motor A speed
+  digitalWrite(BIN_PIN, LOW);  // Set motor B to backward
+  analogWrite(PWMB, carSpeed / 2); // Reduce speed for turning
+  digitalWrite(STBY, HIGH);    // Enable motors
+}
+
+// Stop the car and disable motors
+void Stop() {
+  digitalWrite(AIN, LOW);      // Stop motor A
+  analogWrite(PWMA, 0);        // Set motor A speed to 0
+  digitalWrite(BIN_PIN, LOW);  // Stop motor B
+  analogWrite(PWMB, 0);        // Set motor B speed to 0
+  digitalWrite(STBY, LOW);     // Disable motors (set standby low)
+}
+
+// Reapply current state after speed change
+void applyCurrentState() {
+  // Perform the action based on the car's current state (1 = forward, 2 = backward, etc.)
+  switch (carState) {
+    case 1: 
+      Forward(); 
+      break;
+
+    case 2: 
+      Backward(); 
+      break;
+
+    case 3: 
+      Right(); 
+      break;
+
+    case 4: 
+      Left(); 
+      break;
+
+    case 0:  // Stop the car
+      Stop(); 
+      break;  
+  }
+}
+
+// Increase the car speed
+void increaseSpeed() {
+  carSpeed += speedStep;
+  if (carSpeed > 255) carSpeed = 255;  // Cap speed at 255 (maximum PWM value)
+  Serial.print("Speed increased to: ");
+  Serial.println(carSpeed);  // Print new speed to serial monitor
+  applyCurrentState();  // Reapply the current state with the updated speed
+}
+
+// Decrease the car speed
+void decreaseSpeed() {
+  carSpeed -= speedStep;
+  if (carSpeed < 0) carSpeed = 0;  // Ensure speed doesn't go below 0
+  Serial.print("Speed decreased to: ");
+  Serial.println(carSpeed);  // Print new speed to serial monitor
+  applyCurrentState();  // Reapply the current state with the updated speed
+}
