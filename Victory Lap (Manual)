@@ -1,76 +1,80 @@
+/*
+  The car will make one lap by moving forward, turn left, and stop at specified intervals. 
+
+  Control the 2 DC motors of the robotic car by sending signals to the motor driver. 
+  The program adjusts the speed of the motors using Pulse Width Modulation (PWM) and control the direction by digital signals.
+  The car follows a predefined path to make a lap by moving forward and turning left at specified times and will stop after one lap.
+*/
+
 // Pin Definitions
-const int AIN = 7;  // Motor A direction
-const int PWMA = 5;  // Motor A speed (PWM)
-const int BIN_PIN = 8;  // Motor B direction (renamed to avoid conflict)
-const int PWMB = 6;  // Motor B speed (PWM)
-const int STBY = 3;  // Standby pin 
+const int AIN = 7;      // Motor A direction pin
+const int PWMA = 5;     // Motor A speed (PWM) pin
+const int BIN_PIN = 8;  // Motor B direction pin
+const int PWMB = 6;     // Motor B speed (PWM) pin
+const int STBY = 3;     // Standby pin for enabling/disabling motors
 
-int Speed = 100;  // Initial speed of the car (range: 0 to 255)
+int Speed = 100;        // Speed of the car (range: 0 to 255)
 
-// Function Movement
-void Forward();
-void Stop();
-void Left();
-
+// Function Declarations
+void Forward();  // Move the car forward
+void Stop();     // Stop the car and disable motors
+void Left();     // Turn the car left
 
 void setup() {
-  // Initialize all pins as OUTPUT
+  // Set pins as OUTPUT to control motors and standby pin
   pinMode(AIN, OUTPUT);
   pinMode(PWMA, OUTPUT);
-  pinMode(BIN_PIN, OUTPUT);  // Updated to BIN_PIN
+  pinMode(BIN_PIN, OUTPUT);
   pinMode(PWMB, OUTPUT);
   pinMode(STBY, OUTPUT);
 }
 
 void loop() {
-  Forward();   
-  delay(8000);
-  Left();
-  delay(2000); 
-
-  Forward();   
-  delay(4000);
-  Left();
-  delay(2000); 
-
-  Forward();   
-  delay(8000);
-  Left();
-  delay(2000); 
-
-  Forward();   
-  delay(4000);
-  Left();
-  delay(2000); 
-
-  Forward();   
-  delay(2000);
-  Stop();
-  delay(10000);
+  // Move forward, delay for 8000 miliseconds then turn left, delay for 500 miliseconds two times before the motor stops
+  Forward();
+  delay(8000); 
+  Left(); 
+  delay(500);
+  
+  Forward();
+  delay(4000); 
+  Left(); 
+  delay(500);
+  
+  Forward();
+  delay(8000); 
+  Left();  
+  delay(500);
+  
+  Forward();
+  delay(4000); 
+  Left(); 
+  delay(500);
 }
 
-
-void Forward() {  // Move forward
-  digitalWrite(AIN, HIGH);     // Motor A direction (forward)
-  analogWrite(PWMA, Speed);    // Motor A speed (set speed)
-  digitalWrite(BIN_PIN, HIGH);     // Motor B direction (forward) (updated to BIN_PIN)
-  analogWrite(PWMB, Speed);    // Motor B speed (set speed)
-  digitalWrite(STBY, HIGH);    // Enable car (turn on motors)
+// Move the car forward
+void Forward() {
+  digitalWrite(AIN, HIGH);     // Motor A forward
+  analogWrite(PWMA, Speed);    // Set Motor A speed
+  digitalWrite(BIN_PIN, HIGH); // Motor B forward
+  analogWrite(PWMB, Speed);    // Set Motor B speed
+  digitalWrite(STBY, HIGH);    // Enable motors
 }
 
-void Stop() { // Stop motors
-  digitalWrite(AIN, LOW);      // Motor A direction (stop)
-  analogWrite(PWMA, 0);        // Motor A speed (stop)
-  digitalWrite(BIN_PIN, LOW);      // Motor B direction (stop) (updated to BIN_PIN)
-  analogWrite(PWMB, 0);        // Motor B speed (stop)
-  digitalWrite(STBY, LOW);     // Disable car (turn off motors)
+// Stop the car and disable motors
+void Stop() {
+  digitalWrite(AIN, LOW);      // Motor A stop
+  analogWrite(PWMA, 0);        // Stop Motor A speed
+  digitalWrite(BIN_PIN, LOW);  // Motor B stop
+  analogWrite(PWMB, 0);        // Stop Motor B speed
+  digitalWrite(STBY, LOW);     // Disable motors
 }
 
-
-void Left() { // Turn left
-  digitalWrite(AIN, HIGH);     // Motor A direction (forward)
-  analogWrite(PWMA, Speed);    // Motor A speed (set speed)
-  digitalWrite(BIN_PIN, LOW);      // Motor B direction (backward) (updated to BIN_PIN)
-  analogWrite(PWMB, Speed / 2); // Motor B speed (set speed)
-  digitalWrite(STBY, HIGH);    // Enable car (turn on motors)
+// Turn the car left
+void Left() {
+  digitalWrite(AIN, HIGH);     // Motor A forward
+  analogWrite(PWMA, Speed);    // Set Motor A speed
+  digitalWrite(BIN_PIN, LOW);  // Motor B backward (to turn left)
+  analogWrite(PWMB, Speed);    // Set Motor B speed
+  digitalWrite(STBY, HIGH);    // Enable motors
 }
