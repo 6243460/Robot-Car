@@ -1,0 +1,175 @@
+/*
+  Make the robot avoid any obstacle he detects along his path.
+
+  Uses an ultrasonic sensor to detect obstacles and decides whether to move forward or turn. 
+  Also use a  servo motor is used to rotate thesensor to check for obstacles on the left and right sides.
+*/
+
+#include <Servo.h>  // Include the Servo library to control the servo motor
+
+#define PIN_Servo_z 10  // Define the servo control pin (Pin 10)
+#define TRIG_PIN 13      // Define the trigger pin for ultrasonic sensor (Pin 13)
+#define ECHO_PIN 12      // Define the echo pin for ultrasonic sensor (Pin 12)
+
+Servo myservo;  // Create a Servo object to control the servo motor
+int pos = 0;     // Variable to store the servo's current position
+
+// Pin Definitions for the motors
+const int AIN = 7;      // Motor A direction pin (Pin 7)
+const int PWMA = 5;     // Motor A PWM speed pin (Pin 5)
+const int BIN_PIN = 8;  // Motor B direction pin (Pin 8)
+const int PWMB = 6;     // Motor B PWM speed pin (Pin 6)
+const int STBY = 3;     // Standby pin for enabling/disabling motors (Pin 3)
+
+int carState = 1;    // Initial state of the car (motor enabled, set to 1)
+int carSpeed = 80;   // Initial speed of the car (range 0-255)
+
+// Function prototypes to define car actions and sensor readings
+float getDistance();  // Function to measure distance using the ultrasonic sensor
+void forward();       // Function to move the car forward
+void backward();      // Function to move the car backward
+void right();         // Function to turn the car right
+void left();          // Function to turn the car left
+void uTurn();         // Function to make the car perform a U-turn
+void moveServo(int angle);  // Function to move the servo to a specific angle
+
+// Setup function to initialize hardware components
+void setup() {
+  // Initialize motor control pins as OUTPUT to control the motors
+  pinMode(AIN, OUTPUT);
+  pinMode(PWMA, OUTPUT);
+  pinMode(BIN_PIN, OUTPUT);
+  pinMode(PWMB, OUTPUT);
+  pinMode(STBY, OUTPUT);
+
+  // Initialize the servo motor
+  myservo.attach(PIN_Servo_z);  // Attach the servo motor to Pin 10
+  pinMode(TRIG_PIN, OUTPUT);    // Set the trigger pin as an output (Pin 13)
+  pinMode(ECHO_PIN, INPUT);     // Set the echo pin as an input (Pin 12)
+  myservo.write(90);            // Set the servo to the front position initially
+}
+
+// Main loop function where decision-making happens
+void loop() {
+  float distanceFront, distanceLeft, distanceRight;
+
+  // Measure distance to the front of the robot
+  distanceFront = getDistance();
+  Serial.print("Front Distance: ");
+  Serial.println(distanceFront);  // Display the front distance for debugging
+
+  // If there is no obstacle ahead, move forward
+  if (distanceFront > 25) {
+    forward();  // Move forward if the path is clear
+  } else {
+    stopMotors();  // Stop if there is an obstacle ahead
+
+    // Check if the left side is clear
+    moveServo(180);  // Turn the servo to the left
+    delay(300);      // Allow time for the servo to stabilize
+    distanceLeft = getDistance();  // Measure distance to the left
+    Serial.print("Left Distance: ");
+    Serial.println(distanceLeft);  // Display the left distance for debugging
+
+    if (distanceLeft > 25) {
+      moveServo(90);  // Reset the servo to the front position
+      spinLeft();     // Spin left and move forward
+      forward();      // Move forward if left side is clear
+      return;         // Exit the loop after completing the action
+    }
+
+    // Check if the right side is clear
+    moveServo(0);    // Turn the servo to the right
+    delay(300);      // Allow time for the servo to stabilize
+    distanceRight = getDistance();  // Measure distance to the right
+    Serial.print("Right Distance: ");
+    Serial.println(distanceRight);  // Display the right distance for debugging
+
+    if (distanceRight > 25) {
+      moveServo(90);  // Reset the servo to the front position
+      spinRight();    // Spin right and move forward
+      forward();      // Move forward if right side is clear
+      return;         // Exit the loop after completing the action
+    }
+
+    // If both left and right are blocked, perform a U-turn
+    moveServo(90);  // Reset servo to front position
+    uTurn();        // Perform U-turn if both sides are blocked
+  }
+
+  delay(100);  // Delay to stabilize the sensor readings
+}
+
+// Measure distance using the ultrasonic sensor
+float getDistance() {
+  long duration;
+  float distance;
+
+  // Generate a trigger pulse for the ultrasonic sensor
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+
+  // Measure the time taken for the pulse to return (duration)
+  duration = pulseIn(ECHO_PIN, HIGH);
+
+  // Calculate the distance in centimeters (based on the speed of sound)
+  distance = (duration * 0.034) / 2;
+
+  return distance;  // Return the distance measured
+}
+
+// Move the car forward
+void forward() {
+  digitalWrite(AIN, HIGH);      // Motor A direction (forward)
+  analogWrite(PWMA, carSpeed);  // Set Motor A speed
+  digitalWrite(BIN_PIN, HIGH);  // Motor B direction (forward)
+  analogWrite(PWMB, carSpeed);  // Set Motor B speed
+  digitalWrite(STBY, carState); // Enable car (turn on motors)
+}
+
+// Stop the motors
+void stopMotors() {
+  digitalWrite(AIN, LOW);       // Motor A direction (stop)
+  analogWrite(PWMA, 0);         // Motor A speed (stop)
+  digitalWrite(BIN_PIN, LOW);   // Motor B direction (stop)
+  analogWrite(PWMB, 0);         // Motor B speed (stop)
+}
+
+// Spin the car to the right
+void spinRight() {
+  digitalWrite(AIN, LOW);        // Motor A direction (backward)
+  analogWrite(PWMA, carSpeed);   // Set Motor A speed
+  digitalWrite(BIN_PIN, HIGH);   // Motor B direction (forward)
+  analogWrite(PWMB, carSpeed * 1.5);  // Set Motor B speed
+  delay(500);                    // Wait for the spin to complete
+  stopMotors();                  // Stop the motors after spinning
+}
+
+// Spin the car to the left
+void spinLeft() {
+  digitalWrite(AIN, HIGH);       // Motor A direction (forward)
+  analogWrite(PWMA, carSpeed * 1.5); // Set Motor A speed
+  digitalWrite(BIN_PIN, LOW);    // Motor B direction (backward)
+  analogWrite(PWMB, carSpeed);   // Set Motor B speed
+  delay(500);                    // Wait for the spin to complete
+  stopMotors();                  // Stop the motors after spinning
+}
+
+// Perform a U-turn (180-degree turn)
+void uTurn() {
+  digitalWrite(AIN, LOW);         // Motor A direction (backward)
+  analogWrite(PWMA, carSpeed);    // Set Motor A speed
+  digitalWrite(BIN_PIN, HIGH);    // Motor B direction (forward)
+  analogWrite(PWMB, carSpeed * 1.5); // Set Motor B speed
+  delay(1500);                    // Allow time for the U-turn
+  stopMotors();                   // Stop the motors after completing U-turn
+}
+
+// Move the servo to a specific angle
+void moveServo(int angle) {
+  myservo.write(angle);   // Set the servo to the specified angle
+  delay(500);             // Allow time for the servo to reach the position
+}
